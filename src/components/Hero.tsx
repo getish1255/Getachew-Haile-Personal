@@ -1,13 +1,24 @@
-import React from 'react';
-import { Download, Mail, MapPin, Sparkles, Compass, Share2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Download, Mail, MapPin, Sparkles, Compass, Share2, Camera, Edit2, Check, X } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
+import { InlineEdit } from './admin/InlineEdit';
 
 interface HeroProps {
   onOpenAIModal?: () => void;
 }
 
 export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
-  const { profile, publications, studyRegions, socialLinks } = useContent();
+  const { profile, publications, studyRegions, socialLinks, isAdmin, updateProfile } = useContent();
+  const [isEditingPhoto, setIsEditingPhoto] = useState(false);
+  const [photoUrlInput, setPhotoUrlInput] = useState(profile.photoUrl);
+
+  const handleSavePhotoUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (photoUrlInput.trim()) {
+      await updateProfile({ photoUrl: photoUrlInput.trim() });
+      setIsEditingPhoto(false);
+    }
+  };
 
   return (
     <section className="relative pt-12 pb-16 md:pt-16 md:pb-24 border-b border-slate-800/80 overflow-hidden">
@@ -22,42 +33,54 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
           <div className="lg:col-span-7 flex flex-col justify-center">
             {/* Natural editorial kicker */}
             <div className="flex items-center gap-2 text-xs font-mono font-medium text-emerald-400 mb-4 tracking-wider uppercase">
-              <span>Director, ICT Directorate</span>
-              <span aria-hidden="true">·</span>
-              <span>GIS & Remote Sensing Researcher</span>
+              <InlineEdit
+                value={profile.title}
+                onSave={(val) => updateProfile({ title: val })}
+                label="Professional Title"
+              />
             </div>
 
             {/* Display Headline */}
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-[1.15] mb-6 text-balance">
-              Advancing Geospatial Intelligence & Digital Agriculture in Ethiopia
-            </h1>
+            <InlineEdit
+              value={profile.headline || 'Advancing Geospatial Intelligence & Digital Agriculture in Ethiopia'}
+              onSave={(val) => updateProfile({ headline: val })}
+              as="h1"
+              label="Headline"
+              className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white leading-[1.15] mb-6 text-balance block"
+            />
 
             {/* Body lead copy */}
-            <p className="text-base sm:text-lg text-slate-300 leading-relaxed mb-6">
-              {profile.summary || (
-                <>
-                  Combining over 15 years of institutional ICT executive leadership at the{' '}
-                  <span className="text-white font-medium">{profile.institution}</span> with pioneering applied
-                  research in satellite remote sensing, multi-criteria spatial modeling (AHP), soil fertility
-                  mapping, and machine-learning decision support systems.
-                </>
-              )}
-            </p>
+            <InlineEdit
+              value={
+                profile.summary ||
+                'Combining over 15 years of institutional ICT executive leadership at the Oromia Agricultural Research Institute with pioneering applied research in satellite remote sensing, multi-criteria spatial modeling (AHP), soil fertility mapping, and machine-learning decision support systems.'
+              }
+              onSave={(val) => updateProfile({ summary: val })}
+              multiline={true}
+              as="div"
+              label="Executive Bio Summary"
+              className="text-base sm:text-lg text-slate-300 leading-relaxed mb-6 block"
+            />
 
             {/* Clean unboxed metadata strip */}
             <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs sm:text-sm text-slate-400 mb-6 border-y border-slate-800/90 py-3">
               <span className="flex items-center gap-1.5 text-slate-300">
                 <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>{profile.location}</span>
+                <InlineEdit
+                  value={profile.location}
+                  onSave={(val) => updateProfile({ location: val })}
+                  label="Location"
+                />
               </span>
               <span aria-hidden="true" className="text-slate-700">·</span>
-              <a
-                href={`mailto:${profile.email}`}
-                className="flex items-center gap-1.5 hover:text-emerald-300 transition-colors"
-              >
+              <span className="flex items-center gap-1.5 hover:text-emerald-300 transition-colors">
                 <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                <span>{profile.email}</span>
-              </a>
+                <InlineEdit
+                  value={profile.email}
+                  onSave={(val) => updateProfile({ email: val })}
+                  label="Email"
+                />
+              </span>
               <span aria-hidden="true" className="text-slate-700">·</span>
               <a
                 href={profile.orcid}
@@ -65,10 +88,19 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
                 rel="noreferrer"
                 className="flex items-center gap-1.5 hover:text-emerald-300 transition-colors"
               >
-                <span className="w-3.5 h-3.5 rounded-full bg-[#A6CE39] text-slate-950 font-bold text-[9px] flex items-center justify-center">
+                <span className="w-3.5 h-3.5 rounded-full bg-[#A6CE39] text-slate-950 font-bold text-[9px] flex items-center justify-center shrink-0">
                   iD
                 </span>
-                <span>ORCID: {profile.orcidId}</span>
+                <InlineEdit
+                  value={profile.orcidId}
+                  onSave={(val) =>
+                    updateProfile({
+                      orcidId: val,
+                      orcid: `https://orcid.org/${val}`,
+                    })
+                  }
+                  label="ORCID ID"
+                />
               </a>
             </div>
 
@@ -188,7 +220,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
 
           {/* Right Column: High-Fidelity Photo Container */}
           <div className="lg:col-span-5 flex justify-center lg:justify-end">
-            <div className="relative w-full max-w-sm sm:max-w-md">
+            <div className="relative w-full max-w-sm sm:max-w-md group/photo">
               {/* Decorative corner framing */}
               <div className="absolute -inset-1.5 rounded-2xl bg-gradient-to-tr from-emerald-500/20 via-slate-800/30 to-cyan-500/20 blur-sm pointer-events-none" />
 
@@ -207,11 +239,34 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
                   {/* Subtle lower gradient overlay for text readability */}
                   <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-slate-950 via-slate-950/75 to-transparent" />
 
-                  {/* Identification overlay without IQQO badge next to name */}
+                  {/* Identification overlay with in-line editing */}
                   <div className="absolute bottom-3.5 left-4 right-4">
-                    <p className="text-base font-bold text-white tracking-tight">{profile.name}</p>
-                    <p className="text-xs text-emerald-400 font-medium">{profile.title}</p>
+                    <InlineEdit
+                      value={profile.name}
+                      onSave={(val) => updateProfile({ name: val })}
+                      as="p"
+                      label="Full Name"
+                      className="text-base font-bold text-white tracking-tight block"
+                    />
+                    <InlineEdit
+                      value={profile.title}
+                      onSave={(val) => updateProfile({ title: val })}
+                      as="p"
+                      label="Title"
+                      className="text-xs text-emerald-400 font-medium block"
+                    />
                   </div>
+
+                  {/* Admin Photo Edit Button Overlay */}
+                  {isAdmin && (
+                    <button
+                      onClick={() => setIsEditingPhoto(true)}
+                      className="absolute top-3 right-3 px-2.5 py-1 rounded-lg bg-slate-950/80 border border-emerald-500/60 text-[11px] font-medium text-emerald-300 hover:bg-emerald-500 hover:text-slate-950 transition-all flex items-center gap-1.5 backdrop-blur-xs shadow-md"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Change Photo</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Sub-card quick info */}
@@ -283,6 +338,76 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
           </div>
         </div>
       </div>
+
+      {/* Quick Photo Editor Modal */}
+      {isEditingPhoto && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+          onClick={() => setIsEditingPhoto(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-700 shadow-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+              <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                <Camera className="w-4 h-4 text-emerald-400" />
+                <span>Update Profile Portrait</span>
+              </h4>
+              <button
+                onClick={() => setIsEditingPhoto(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleSavePhotoUrl} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Photo Path or Public Image URL
+                </label>
+                <input
+                  type="text"
+                  value={photoUrlInput}
+                  onChange={(e) => setPhotoUrlInput(e.target.value)}
+                  placeholder="/assets/aistudio/... or https://..."
+                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white"
+                  required
+                />
+              </div>
+
+              {photoUrlInput && (
+                <div className="h-40 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
+                  <img
+                    src={photoUrlInput}
+                    alt="Preview"
+                    className="h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = '/public/assets/aistudio/photo_2026-05-26_22-25-44_b863dba6.jpg';
+                    }}
+                  />
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingPhoto(false)}
+                  className="px-3 py-1.5 text-xs text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-emerald-400 text-slate-950 text-xs font-bold hover:bg-emerald-300"
+                >
+                  Save Photo
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

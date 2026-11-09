@@ -19,6 +19,8 @@ export interface ProfileData {
   photoUrl: string;
   cvPdfUrl: string;
   summary: string;
+  headline?: string;
+  aboutNarrative?: string;
   languages: { language: string; proficiency: string }[];
 }
 

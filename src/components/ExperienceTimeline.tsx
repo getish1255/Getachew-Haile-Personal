@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Briefcase,
   GraduationCap,
@@ -11,6 +11,7 @@ import {
   UserCheck,
   Mail,
   Phone,
+  Edit3,
 } from 'lucide-react';
 import {
   EXPERIENCE_LIST,
@@ -20,9 +21,29 @@ import {
   TRAINING_DELIVERED,
   TRAINING_ATTENDED,
 } from '../data/cvData';
+import { useContent } from '../context/ContentContext';
+import { InlineEdit } from './admin/InlineEdit';
 
 export const ExperienceTimeline: React.FC = () => {
+  const { isAdmin } = useContent();
   const [activeTab, setActiveTab] = useState<'leadership' | 'research' | 'education' | 'skills'>('leadership');
+
+  // Local state for editable role summaries
+  const [leadershipSummary, setLeadershipSummary] = useState(() => {
+    return localStorage.getItem('iqqo_exp_leadership_summary') || EXPERIENCE_LIST[0].summary;
+  });
+
+  const [researchSummary, setResearchSummary] = useState(() => {
+    return localStorage.getItem('iqqo_exp_research_summary') || EXPERIENCE_LIST[1].summary;
+  });
+
+  const [leadershipTitle, setLeadershipTitle] = useState(() => {
+    return localStorage.getItem('iqqo_exp_leadership_title') || EXPERIENCE_LIST[0].role;
+  });
+
+  const [researchTitle, setResearchTitle] = useState(() => {
+    return localStorage.getItem('iqqo_exp_research_title') || EXPERIENCE_LIST[1].role;
+  });
 
   return (
     <section id="experience" className="py-20 border-b border-slate-800/80 bg-slate-900/40">
@@ -96,9 +117,16 @@ export const ExperienceTimeline: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                 <div>
                   <span className="text-xs font-mono text-emerald-400">February 2010 – Present (15+ Years)</span>
-                  <h3 className="text-2xl font-bold text-white tracking-tight mt-1">
-                    Director, ICT Directorate
-                  </h3>
+                  <InlineEdit
+                    value={leadershipTitle}
+                    onSave={(val) => {
+                      setLeadershipTitle(val);
+                      localStorage.setItem('iqqo_exp_leadership_title', val);
+                    }}
+                    as="h3"
+                    label="Executive Role Title"
+                    className="text-2xl font-bold text-white tracking-tight mt-1 block"
+                  />
                   <p className="text-sm text-slate-300 font-medium mt-0.5">
                     Oromia Agricultural Research Institute (IQQO), Ethiopia
                   </p>
@@ -110,9 +138,17 @@ export const ExperienceTimeline: React.FC = () => {
               </div>
 
               <div className="mt-6">
-                <p className="text-sm sm:text-base text-slate-300 leading-relaxed mb-8">
-                  {EXPERIENCE_LIST[0].summary}
-                </p>
+                <InlineEdit
+                  value={leadershipSummary}
+                  onSave={(val) => {
+                    setLeadershipSummary(val);
+                    localStorage.setItem('iqqo_exp_leadership_summary', val);
+                  }}
+                  multiline={true}
+                  as="div"
+                  label="Role Summary"
+                  className="text-sm sm:text-base text-slate-300 leading-relaxed mb-8 block"
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Strategic Duties */}
@@ -162,9 +198,16 @@ export const ExperienceTimeline: React.FC = () => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
                 <div>
                   <span className="text-xs font-mono text-emerald-400">Natural Resources Research Directorate</span>
-                  <h3 className="text-2xl font-bold text-white tracking-tight mt-1">
-                    Senior GIS & Remote Sensing Researcher
-                  </h3>
+                  <InlineEdit
+                    value={researchTitle}
+                    onSave={(val) => {
+                      setResearchTitle(val);
+                      localStorage.setItem('iqqo_exp_research_title', val);
+                    }}
+                    as="h3"
+                    label="Researcher Title"
+                    className="text-2xl font-bold text-white tracking-tight mt-1 block"
+                  />
                   <p className="text-sm text-slate-300 font-medium mt-0.5">
                     Oromia Agricultural Research Institute (IQQO)
                   </p>
@@ -176,9 +219,17 @@ export const ExperienceTimeline: React.FC = () => {
               </div>
 
               <div className="mt-6">
-                <p className="text-sm sm:text-base text-slate-300 leading-relaxed mb-8">
-                  {EXPERIENCE_LIST[1].summary}
-                </p>
+                <InlineEdit
+                  value={researchSummary}
+                  onSave={(val) => {
+                    setResearchSummary(val);
+                    localStorage.setItem('iqqo_exp_research_summary', val);
+                  }}
+                  multiline={true}
+                  as="div"
+                  label="Research Overview"
+                  className="text-sm sm:text-base text-slate-300 leading-relaxed mb-8 block"
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Research Activities */}
@@ -248,20 +299,25 @@ export const ExperienceTimeline: React.FC = () => {
               <h4 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-6">
                 Technical Tooling & Software Stack
               </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 {TECHNICAL_STACK.map((group, idx) => (
-                  <div key={idx} className="space-y-3">
-                    <span className="text-xs font-mono font-medium text-emerald-400 block border-b border-slate-800 pb-1.5">
+                  <div
+                    key={idx}
+                    className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-left hover:border-emerald-500/50 transition-colors col-span-1 sm:col-span-1 lg:col-span-3"
+                  >
+                    <span className="text-[11px] font-mono text-emerald-400 block mb-2 font-bold">
                       {group.category}
                     </span>
-                    <ul className="space-y-1.5 text-xs text-slate-300">
-                      {group.tools.map((t, tIdx) => (
-                        <li key={tIdx} className="flex items-center gap-2">
-                          <span className="w-1 h-1 rounded-full bg-slate-500" />
-                          <span>{t}</span>
-                        </li>
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.tools.map((tool, tIdx) => (
+                        <span
+                          key={tIdx}
+                          className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-200"
+                        >
+                          {tool}
+                        </span>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -272,55 +328,71 @@ export const ExperienceTimeline: React.FC = () => {
         {/* Tab 4: Education & Training */}
         {activeTab === 'education' && (
           <div className="space-y-8">
-            {/* Academic Degrees */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {PROFILE_DATA.education.map((edu, idx) => (
-                <div key={idx} className="p-6 rounded-2xl border border-slate-800 bg-slate-900/90 shadow-md space-y-3">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono text-emerald-400 font-medium">{edu.year}</span>
-                    <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[11px]">Degree</span>
-                  </div>
-                  <h4 className="text-lg font-bold text-white tracking-tight">{edu.degree}</h4>
-                  <p className="text-sm text-slate-300 font-medium">{edu.institution}</p>
-                  <p className="text-xs text-slate-400 italic bg-slate-950 p-3 rounded-lg border border-slate-800/80">
-                    {edu.details}
-                  </p>
-                  <p className="text-xs text-slate-400">
-                    <strong className="text-slate-300">Focus:</strong> {edu.focus}
-                  </p>
-                </div>
-              ))}
-            </div>
-
-            {/* Training Delivered vs Attended */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Training Delivered */}
-              <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-md space-y-4">
-                <h4 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                  <Users className="w-4 h-4 text-emerald-400" />
-                  <span>Specialized Training Delivered</span>
+              {/* MSc Degree */}
+              <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg relative">
+                <span className="text-xs font-mono text-emerald-400">2014 – 2017</span>
+                <h4 className="text-lg font-bold text-white mt-1">
+                  Master of Science (MSc) in Geo-Spatial & Remote Sensing
                 </h4>
-                <div className="space-y-2.5">
-                  {TRAINING_DELIVERED.map((t, idx) => (
-                    <div key={idx} className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80 text-xs">
-                      <p className="font-semibold text-slate-200">{t.topic}</p>
-                      <p className="text-slate-400 text-[11px] mt-0.5">Audience: {t.audience}</p>
-                    </div>
-                  ))}
+                <p className="text-xs text-slate-300 font-medium mt-1">
+                  Addis Ababa University, College of Natural & Computational Sciences
+                </p>
+                <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-1">
+                  <p>
+                    <strong className="text-slate-300">Thesis:</strong> GIS-based approach for identification of
+                    potential rainwater harvesting sites in Arsi Zone, Central Ethiopia.
+                  </p>
+                  <p className="text-emerald-400 font-mono text-[11px]">Completed with High Distinction</p>
                 </div>
               </div>
 
-              {/* Training Attended */}
-              <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/80 shadow-md space-y-4">
-                <h4 className="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                  <GraduationCap className="w-4 h-4 text-cyan-400" />
-                  <span>Professional Training Attended</span>
+              {/* BSc Degree */}
+              <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/90 shadow-lg relative">
+                <span className="text-xs font-mono text-emerald-400">2006 – 2009</span>
+                <h4 className="text-lg font-bold text-white mt-1">
+                  Bachelor of Science (BSc) in Computer Science & IT
                 </h4>
-                <ul className="space-y-2 text-xs text-slate-300">
-                  {TRAINING_ATTENDED.map((t, idx) => (
-                    <li key={idx} className="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-start gap-2.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
-                      <span>{t}</span>
+                <p className="text-xs text-slate-300 font-medium mt-1">
+                  Haramaya University, College of Computing and Informatics
+                </p>
+                <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400 space-y-1">
+                  <p>
+                    <strong className="text-slate-300">Curriculum:</strong> Database systems, enterprise network
+                    architecture, algorithms, software engineering, and spatial computing fundamentals.
+                  </p>
+                  <p className="text-emerald-400 font-mono text-[11px]">Graduated with Honors</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Trainings Delivered vs Attended */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/70">
+                <h4 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-emerald-400" />
+                  <span>Key Capacity Trainings Delivered</span>
+                </h4>
+                <ul className="space-y-3 text-xs text-slate-300">
+                  {TRAINING_DELIVERED.map((t, idx) => (
+                    <li key={idx} className="p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+                      <p className="font-semibold text-white">{t.topic}</p>
+                      <p className="text-slate-400 text-[11px] mt-0.5">{t.audience}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-6 rounded-2xl border border-slate-800 bg-slate-900/70">
+                <h4 className="text-sm font-bold text-slate-200 uppercase tracking-wider mb-4 flex items-center gap-2">
+                  <Building className="w-4 h-4 text-cyan-400" />
+                  <span>Advanced Professional Certifications</span>
+                </h4>
+                <ul className="space-y-3 text-xs text-slate-300">
+                  {TRAINING_ATTENDED.map((cert, idx) => (
+                    <li key={idx} className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center gap-2.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
+                      <p className="font-semibold text-white text-xs">{cert}</p>
                     </li>
                   ))}
                 </ul>
@@ -328,43 +400,6 @@ export const ExperienceTimeline: React.FC = () => {
             </div>
           </div>
         )}
-
-        {/* Institutional References Strip */}
-        <div className="mt-14 pt-8 border-t border-slate-800">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-base font-bold text-white">Verified Institutional References</h3>
-              <p className="text-xs text-slate-400">From the Oromia Agricultural Research Institute & Bureau of Agriculture</p>
-            </div>
-            <span className="text-xs font-mono text-emerald-400">3 Listed in Official CV</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PROFILE_DATA.references.map((ref, idx) => (
-              <div
-                key={idx}
-                className="p-5 rounded-2xl border border-slate-800 bg-slate-900/60 hover:bg-slate-900/90 transition-colors"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <UserCheck className="w-4 h-4 text-emerald-400" />
-                  <h4 className="text-sm font-bold text-white">{ref.name}</h4>
-                </div>
-                <p className="text-xs font-medium text-emerald-300">{ref.role}</p>
-                <p className="text-xs text-slate-400 mb-3">{ref.organization}</p>
-                <div className="pt-3 border-t border-slate-800 text-xs space-y-1 text-slate-400">
-                  <a href={`mailto:${ref.email}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                    <Mail className="w-3 h-3 text-slate-400" />
-                    <span>{ref.email}</span>
-                  </a>
-                  <a href={`tel:${ref.phone}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
-                    <Phone className="w-3 h-3 text-slate-400" />
-                    <span>{ref.phone}</span>
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );

@@ -1,11 +1,18 @@
 import React from 'react';
-import { ShieldCheck, Database, Cpu, Compass, Layers, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Edit3 } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
+import { InlineEdit } from './admin/InlineEdit';
 
 const FIELD_TRIAL_IMG = '/src/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg';
 
+const DEFAULT_ABOUT_NARRATIVE =
+  'With over 15 continuous years of institutional leadership at the Oromia Agricultural Research Institute (IQQO), Getachew Haile has stood at the critical nexus where enterprise digital technologies empower frontline agricultural research.\n\nAs Director of the ICT Directorate, he orchestrated the modern digital architecture of the institute—modernizing data center infrastructures, enterprise LAN/WAN networks connecting regional stations, and establishing institutional research information systems (RIMS).\n\nConcurrently, as a Senior GIS & Remote Sensing Researcher within the Natural Resources Research Directorate, Getachew applies advanced satellite image processing, multi-criteria evaluation (AHP), and machine learning to resolve vital hydrological, agroforestry, and soil fertility questions across Oromia and Central Ethiopia.';
+
 export const AboutSection: React.FC = () => {
-  const { profile } = useContent();
+  const { profile, updateProfile, isAdmin } = useContent();
+
+  const narrativeText = profile.aboutNarrative || DEFAULT_ABOUT_NARRATIVE;
+
   return (
     <section id="about" className="py-20 border-b border-slate-800/80 bg-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,25 +62,17 @@ export const AboutSection: React.FC = () => {
               </h2>
             </div>
 
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              With over 15 continuous years of institutional leadership at the{' '}
-              <strong className="text-white">Oromia Agricultural Research Institute (IQQO)</strong>, Getachew Haile has
-              stood at the critical nexus where enterprise digital technologies empower frontline agricultural
-              research.
-            </p>
-
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              As <strong className="text-white">Director of the ICT Directorate</strong>, he orchestrated the modern
-              digital architecture of the institute—modernizing data center infrastructures, enterprise LAN/WAN networks
-              connecting regional stations, and establishing institutional research information systems (RIMS).
-            </p>
-
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Concurrently, as a <strong className="text-white">Senior GIS & Remote Sensing Researcher</strong> within the
-              Natural Resources Research Directorate, Getachew applies advanced satellite image processing,
-              multi-criteria evaluation (AHP), and machine learning to resolve vital hydrological, agroforestry, and soil
-              fertility questions across Oromia and Central Ethiopia.
-            </p>
+            {/* In-page Editable Bio Narrative */}
+            <div className="space-y-4">
+              <InlineEdit
+                value={narrativeText}
+                onSave={(val) => updateProfile({ aboutNarrative: val })}
+                multiline={true}
+                as="div"
+                label="Executive Narrative"
+                className="text-sm sm:text-base text-slate-300 leading-relaxed block whitespace-pre-line"
+              />
+            </div>
 
             {/* 3 Core Impact Highlights */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">

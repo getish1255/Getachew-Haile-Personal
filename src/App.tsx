@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ContentProvider } from './context/ContentContext';
+import { AdminFloatingBar } from './components/admin/AdminFloatingBar';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { AboutSection } from './components/AboutSection';
@@ -40,6 +41,23 @@ function AppContent() {
     <div className="relative min-h-screen bg-transparent text-slate-100 flex flex-col font-sans selection:bg-emerald-500/30 selection:text-emerald-200">
       {/* Interactive 3D Spline / Three.js Canvas Background */}
       <ThreeBackground />
+
+      {/* Admin Live In-Page Bar (Visible only when authenticated) */}
+      <AdminFloatingBar
+        onOpenCMS={() => setIsAdminModalOpen(true)}
+        onQuickAddPub={() => {
+          const el = document.getElementById('publications');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onQuickAddBasin={() => {
+          const el = document.getElementById('spatial-explorer');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onQuickAddPhoto={() => {
+          const el = document.getElementById('gallery');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }}
+      />
 
       {/* Top Bar Navigation with Admin Trigger */}
       <Navbar
