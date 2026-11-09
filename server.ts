@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
@@ -544,21 +544,50 @@ Format as clean Markdown with:
 });
 
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const distExists = fs.existsSync(path.resolve(__dirname, 'dist', 'index.html'));
+
+  const distPath = path.resolve(__dirname, 'dist');
+  const publicPath = path.resolve(__dirname, 'public');
+  const srcPath = path.resolve(__dirname, 'src');
+
+  // Always serve static assets from public and dist
+  app.use(express.static(publicPath));
+  app.use('/public', express.static(publicPath));
+  app.use('/src', express.static(srcPath));
+
+  if (!isProduction) {
+    try {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } catch (err) {
+      console.warn('Vite middleware could not initialize, falling back to dist static files:', err);
+      if (distExists) {
+        app.use(express.static(distPath));
+        app.get('*', (req, res, next) => {
+          if (req.path.startsWith('/api')) return next();
+          res.sendFile(path.resolve(distPath, 'index.html'));
+        });
+      }
+    }
   } else {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (_req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+    app.use(express.static(distPath));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) return next();
+      const indexPath = path.resolve(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(404).send('Not Found');
+      }
     });
   }
 
   app.listen(port, '0.0.0.0', () => {
-    console.log(`Server running at http://localhost:${port}`);
+    console.log(`Server running on port ${port} (NODE_ENV=${process.env.NODE_ENV || 'development'})`);
   });
 }
 
