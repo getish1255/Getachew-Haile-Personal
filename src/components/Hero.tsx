@@ -8,7 +8,7 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
-  const { profile, publications, studyRegions, socialLinks, isAdmin, updateProfile } = useContent();
+  const { profile, publications, studyRegions, socialLinks, isAdmin, updateProfile, t } = useContent();
   const [isEditingPhoto, setIsEditingPhoto] = useState(false);
   const [photoUrlInput, setPhotoUrlInput] = useState(profile.photoUrl);
 
@@ -293,22 +293,22 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
                 15+
               </span>
               <span className="text-xs sm:text-sm font-medium text-slate-400 mt-1">
-                Years of ICT Leadership
+                {t('hero.kpi1Label', 'Years of ICT Leadership')}
               </span>
               <span className="text-xs text-slate-400 mt-0.5">
-                Enterprise Infrastructure & Geospatial
+                {t('hero.kpi1Sub', 'Enterprise Infrastructure & Geospatial')}
               </span>
             </div>
 
             <div className="flex flex-col">
               <span className="text-3xl lg:text-4xl font-extrabold font-mono tabular-nums text-emerald-400 tracking-tight">
-                {publications.length}+
+                {Math.max(15, publications.length)}+
               </span>
               <span className="text-xs sm:text-sm font-medium text-slate-400 mt-1">
-                Peer-Reviewed Publications
+                {t('hero.kpi2Label', 'Peer-Reviewed Publications')}
               </span>
               <span className="text-xs text-slate-400 mt-0.5">
-                Rainwater, Agroforestry & Soils
+                {t('hero.kpi2Sub', 'Rainwater, Agroforestry & Soils')}
               </span>
             </div>
 
@@ -317,10 +317,10 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
                 {studyRegions.length}
               </span>
               <span className="text-xs sm:text-sm font-medium text-slate-400 mt-1">
-                Regional Basins Modeled
+                {t('hero.kpi3Label', 'Regional Basins Modeled')}
               </span>
               <span className="text-xs text-slate-400 mt-0.5">
-                Arsi, Genale-Dawa, Bale, Weyib & Rift
+                {t('hero.kpi3Sub', 'Arsi, Genale-Dawa, Bale, Weyib & Rift')}
               </span>
             </div>
 

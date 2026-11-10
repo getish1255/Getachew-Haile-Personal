@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "siteContent": {
+      "title": "SiteContent",
+      "description": "Portfolio content and state for Getachew Haile synchronized across all devices",
+      "type": "object",
+      "properties": {
+        "profile": {
+          "type": "object",
+          "description": "Biographical details, titles, contact information, and narrative"
+        },
+        "publications": {
+          "type": "array",
+          "description": "List of scientific publications with citations, BibTeX, and RIS data"
+        },
+        "studyRegions": {
+          "type": "array",
+          "description": "GIS study catchments and regional basin modeling data"
+        },
+        "socialLinks": {
+          "type": "object",
+          "description": "Social media, scholar, and professional network URLs"
+        },
+        "photoGallery": {
+          "type": "array",
+          "description": "Curated field research and leadership gallery photos"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "ISO timestamp of the most recent content update"
+        }
+      },
+      "required": ["profile", "publications", "studyRegions", "socialLinks", "photoGallery"]
+    },
+    "inquiry": {
+      "title": "Inquiry",
+      "description": "Visitor contact and collaboration requests",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for inquiry"
+        },
+        "name": {
+          "type": "string",
+          "description": "Visitor full name",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "description": "Visitor contact email address",
+          "maxLength": 150
+        },
+        "organization": {
+          "type": "string",
+          "description": "Visitor affiliated organization",
+          "maxLength": 150
+        },
+        "inquiryType": {
+          "type": "string",
+          "description": "Category of collaboration or inquiry",
+          "maxLength": 100
+        },
+        "message": {
+          "type": "string",
+          "description": "Text message content",
+          "maxLength": 3000
+        },
+        "receivedAt": {
+          "type": "string",
+          "description": "ISO timestamp of receipt"
+        },
+        "status": {
+          "type": "string",
+          "description": "Review status (unread, read, archived)",
+          "maxLength": 30
+        }
+      },
+      "required": ["name", "email", "message"]
+    }
+  },
+  "firestore": {
+    "/portfolio/{docId}": {
+      "schema": "siteContent",
+      "description": "Global portfolio configuration document containing profile, publications, and gallery"
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": "inquiry",
+      "description": "Incoming inquiries from the portfolio contact form"
+    }
+  }
+}

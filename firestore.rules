@@ -1,0 +1,72 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'boqolo@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidSiteContent(data) {
+      return data.keys().hasAll(['profile', 'publications', 'studyRegions', 'socialLinks', 'photoGallery']) &&
+        data.profile is map &&
+        data.profile.name is string && data.profile.name.size() <= 200 &&
+        data.publications is list && data.publications.size() <= 500 &&
+        data.studyRegions is list && data.studyRegions.size() <= 100 &&
+        data.socialLinks is map &&
+        data.photoGallery is list && data.photoGallery.size() <= 200;
+    }
+
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['name', 'email', 'message']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+        data.email is string && data.email.size() > 3 && data.email.size() <= 150 &&
+        data.message is string && data.message.size() > 0 && data.message.size() <= 3000;
+    }
+
+    // Portfolio Content Collection
+    match /portfolio/{docId} {
+      allow read: if isValidId(docId);
+      allow create: if isValidId(docId) && isSignedIn() && isValidSiteContent(incoming());
+      allow update: if isValidId(docId) && isSignedIn() && isValidSiteContent(incoming());
+      allow delete: if isValidId(docId) && isAdmin();
+    }
+
+    // Public Contact Inquiries
+    match /inquiries/{inquiryId} {
+      allow read: if isValidId(inquiryId) && isSignedIn();
+      allow create: if isValidId(inquiryId) && isValidInquiry(incoming());
+      allow update: if isValidId(inquiryId) && isSignedIn();
+      allow delete: if isValidId(inquiryId) && isSignedIn();
+    }
+
+    // Testing connection helper path
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}

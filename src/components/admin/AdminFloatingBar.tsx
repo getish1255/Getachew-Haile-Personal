@@ -43,8 +43,11 @@ export const AdminFloatingBar: React.FC<AdminFloatingBarProps> = ({
           </span>
           <div className="flex items-center gap-1.5 font-bold text-white tracking-tight">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="hidden sm:inline">Admin Mode Active:</span>
             <span className="text-emerald-400 font-mono text-[11px]">All In-Page Content Is Editable</span>
+            <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-mono text-emerald-300/80 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Firestore Cloud Sync Active
+            </span>
           </div>
         </div>
 

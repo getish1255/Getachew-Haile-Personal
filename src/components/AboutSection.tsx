@@ -9,7 +9,7 @@ const DEFAULT_ABOUT_NARRATIVE =
   'With over 15 continuous years of institutional leadership at the Oromia Agricultural Research Institute (IQQO), Getachew Haile has stood at the critical nexus where enterprise digital technologies empower frontline agricultural research.\n\nAs Director of the ICT Directorate, he orchestrated the modern digital architecture of the institute—modernizing data center infrastructures, enterprise LAN/WAN networks connecting regional stations, and establishing institutional research information systems (RIMS).\n\nConcurrently, as a Senior GIS & Remote Sensing Researcher within the Natural Resources Research Directorate, Getachew applies advanced satellite image processing, multi-criteria evaluation (AHP), and machine learning to resolve vital hydrological, agroforestry, and soil fertility questions across Oromia and Central Ethiopia.';
 
 export const AboutSection: React.FC = () => {
-  const { profile, updateProfile, isAdmin } = useContent();
+  const { profile, updateProfile, isAdmin, t } = useContent();
 
   const narrativeText = profile.aboutNarrative || DEFAULT_ABOUT_NARRATIVE;
 
@@ -78,18 +78,18 @@ export const AboutSection: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
               <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
                 <span className="text-xs font-mono text-emerald-400">01. Strategy</span>
-                <p className="text-xs font-bold text-white">Institutional Transformation</p>
-                <p className="text-[11px] text-slate-400">15+ years formulating ICT policy and data governance.</p>
+                <p className="text-xs font-bold text-white">{t('about.h1', 'Institutional Transformation')}</p>
+                <p className="text-[11px] text-slate-400">{t('about.h1Desc', '15+ years formulating ICT policy and data governance.')}</p>
               </div>
               <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
                 <span className="text-xs font-mono text-cyan-400">02. Spatial Science</span>
-                <p className="text-xs font-bold text-white">AHP & Remote Sensing</p>
-                <p className="text-[11px] text-slate-400">Multi-criteria models for rainwater and groundwater.</p>
+                <p className="text-xs font-bold text-white">{t('about.h2', 'AHP & Remote Sensing')}</p>
+                <p className="text-[11px] text-slate-400">{t('about.h2Desc', 'Multi-criteria models for rainwater and groundwater.')}</p>
               </div>
               <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-                <span className="text-xs font-mono text-amber-400">03. Food Security</span>
-                <p className="text-xs font-bold text-white">Soil & Tef Nutrition</p>
-                <p className="text-[11px] text-slate-400">Field demonstrations and organic bio-fertilizer optimization.</p>
+                <span className="text-xs font-mono text-purple-400">{t('about.h3Badge', '03. Machine Learning and GeoAI')}</span>
+                <p className="text-xs font-bold text-white">{t('about.h3Title', 'Predictive Spatial Modeling')}</p>
+                <p className="text-[11px] text-slate-400">{t('about.h3Desc', 'Satellite computer vision, deep spatial analytics, and AI-driven soil-climate decision matrices.')}</p>
               </div>
             </div>
           </div>

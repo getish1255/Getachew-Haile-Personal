@@ -137,7 +137,7 @@ export const PublicationsSection: React.FC = () => {
           <div>
             <div className="flex items-center gap-2 text-xs font-mono font-medium text-emerald-400 mb-2 uppercase tracking-wider">
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Peer-Reviewed Literature & MSc Thesis</span>
+              <span>15+ Peer-Reviewed Publications · Rainwater, Agroforestry & Soils</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight leading-tight">
               Published Scientific Contributions
@@ -152,7 +152,7 @@ export const PublicationsSection: React.FC = () => {
             <button
               onClick={() => handleExportAll('bibtex')}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-950/70 border border-emerald-700/60 text-emerald-300 hover:bg-emerald-900 transition-colors shadow-xs"
-              title="Export all 8 publications as BibTeX (.bib) for LaTeX/Overleaf"
+              title={`Export all ${publications.length} publications as BibTeX (.bib) for LaTeX/Overleaf`}
             >
               <FileCode className="w-3.5 h-3.5 text-emerald-400" />
               <span>Export All (BibTeX)</span>
@@ -160,7 +160,7 @@ export const PublicationsSection: React.FC = () => {
             <button
               onClick={() => handleExportAll('ris')}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-cyan-950/70 border border-cyan-700/60 text-cyan-300 hover:bg-cyan-900 transition-colors shadow-xs"
-              title="Export all 8 publications as RIS (.ris) for Zotero, Mendeley & EndNote"
+              title={`Export all ${publications.length} publications as RIS (.ris) for Zotero, Mendeley & EndNote`}
             >
               <FileText className="w-3.5 h-3.5 text-cyan-400" />
               <span>Export All (RIS)</span>

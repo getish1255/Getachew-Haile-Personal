@@ -6,6 +6,14 @@ import {
   Publication,
   StudyRegion,
 } from '../data/cvData';
+import {
+  getRemotePortfolioContent,
+  subscribeToRemotePortfolio,
+  setRemotePortfolioContent,
+  getRemoteInquiries,
+  deleteRemoteInquiry,
+} from '../firebase';
+import { Language, TRANSLATIONS } from '../i18n/translations';
 
 export interface ProfileData {
   name: string;
@@ -111,6 +119,9 @@ interface ContentContextType {
   isLoading: boolean;
   isAdmin: boolean;
   adminToken: string | null;
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: string, fallback?: string) => string;
   login: (password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   forgotPassword: () => Promise<{ success: boolean; message: string; targetEmail?: string; devPin?: string }>;
@@ -142,11 +153,30 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [photoGallery, setPhotoGallery] = useState<PhotoGalleryItem[]>(DEFAULT_PHOTO_GALLERY);
   const [lastUpdated, setLastUpdated] = useState<string>(new Date().toISOString());
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [language, setLanguageState] = useState<Language>(() => {
+    return (localStorage.getItem('iqqo_preferred_language') as Language) || 'en';
+  });
+
   const [adminToken, setAdminToken] = useState<string | null>(() => {
     return sessionStorage.getItem('iqqo_admin_token') || localStorage.getItem('iqqo_admin_token');
   });
 
   const isAdmin = !!adminToken;
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    try {
+      localStorage.setItem('iqqo_preferred_language', lang);
+    } catch {}
+  };
+
+  const t = (key: string, fallback?: string): string => {
+    const dict = TRANSLATIONS[language] || TRANSLATIONS.en;
+    if (dict && dict[key]) return dict[key];
+    const enDict = TRANSLATIONS.en;
+    if (enDict && enDict[key]) return enDict[key];
+    return fallback || key;
+  };
 
   const saveCache = (data: {
     profile?: ProfileData;
@@ -166,33 +196,61 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     }
   };
 
+  const applyRemoteData = (data: any) => {
+    if (!data) return;
+    if (data.profile) setProfile(data.profile);
+    if (Array.isArray(data.publications) && data.publications.length > 0) setPublications(data.publications);
+    if (Array.isArray(data.studyRegions) && data.studyRegions.length > 0) setStudyRegions(data.studyRegions);
+    if (data.socialLinks) setSocialLinks(data.socialLinks);
+    if (Array.isArray(data.photoGallery) && data.photoGallery.length > 0) setPhotoGallery(data.photoGallery);
+    if (data.lastUpdated) setLastUpdated(data.lastUpdated);
+    saveCache(data);
+  };
+
+  const syncToFirestore = async (override?: any) => {
+    try {
+      const fullPayload = {
+        profile: override?.profile || profile,
+        publications: override?.publications || publications,
+        studyRegions: override?.studyRegions || studyRegions,
+        socialLinks: override?.socialLinks || socialLinks,
+        photoGallery: override?.photoGallery || photoGallery,
+        lastUpdated: new Date().toISOString(),
+      };
+      await setRemotePortfolioContent(fullPayload);
+    } catch (e) {
+      console.warn('Firestore sync note:', e);
+    }
+  };
+
   const fetchLiveContent = async () => {
-    // 1. Load from local cache first for instant resilient render
+    // 1. Load from local cache first for instant zero-latency paint
     try {
       const cached = localStorage.getItem('iqqo_live_content_cache');
       if (cached) {
-        const data = JSON.parse(cached);
-        if (data.profile) setProfile(data.profile);
-        if (Array.isArray(data.publications)) setPublications(data.publications);
-        if (Array.isArray(data.studyRegions)) setStudyRegions(data.studyRegions);
-        if (data.socialLinks) setSocialLinks(data.socialLinks);
-        if (Array.isArray(data.photoGallery)) setPhotoGallery(data.photoGallery);
-        if (data.lastUpdated) setLastUpdated(data.lastUpdated);
+        applyRemoteData(JSON.parse(cached));
       }
     } catch {}
 
-    // 2. Fetch fresh content from server
+    // 2. Fetch fresh content from Firestore Cloud Database
+    try {
+      const firestoreData = await getRemotePortfolioContent();
+      if (firestoreData) {
+        applyRemoteData(firestoreData);
+      } else {
+        // Seed initial portfolio into Firestore if document is empty
+        await syncToFirestore();
+      }
+    } catch (err) {
+      console.warn('Firestore initial fetch note:', err);
+    }
+
+    // 3. Fallback to server.ts API
     try {
       const res = await fetch('/api/content');
       const data = await safeParseJson(res);
       if (res.ok && data) {
-        if (data.profile) setProfile(data.profile);
-        if (Array.isArray(data.publications)) setPublications(data.publications);
-        if (Array.isArray(data.studyRegions)) setStudyRegions(data.studyRegions);
-        if (data.socialLinks) setSocialLinks(data.socialLinks);
-        if (Array.isArray(data.photoGallery)) setPhotoGallery(data.photoGallery);
-        if (data.lastUpdated) setLastUpdated(data.lastUpdated);
-        saveCache(data);
+        applyRemoteData(data);
       }
     } catch (err) {
       console.warn('Could not fetch remote content, using cache:', err);
@@ -203,6 +261,22 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   useEffect(() => {
     fetchLiveContent();
+
+    // Subscribe to real-time changes across all user sessions and devices
+    let unsubscribe: (() => void) | undefined;
+    try {
+      unsubscribe = subscribeToRemotePortfolio((data) => {
+        if (data) {
+          applyRemoteData(data);
+        }
+      });
+    } catch (err) {
+      console.warn('Firestore subscription note:', err);
+    }
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
   const login = async (password: string): Promise<{ success: boolean; error?: string }> => {
@@ -344,6 +418,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = { ...profile, ...data };
     setProfile(updated);
     saveCache({ profile: updated });
+    syncToFirestore({ profile: updated });
 
     try {
       const res = await fetch('/api/admin/profile', {
@@ -365,6 +440,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = { ...socialLinks, ...links };
     setSocialLinks(updated);
     saveCache({ socialLinks: updated });
+    syncToFirestore({ socialLinks: updated });
 
     try {
       const res = await fetch('/api/admin/social-links', {
@@ -406,6 +482,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = [fullPub, ...publications];
     setPublications(updated);
     saveCache({ publications: updated });
+    syncToFirestore({ publications: updated });
 
     try {
       await fetch('/api/admin/publications', {
@@ -423,6 +500,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = publications.map((p) => (p.id === id ? { ...p, ...pub } : p));
     setPublications(updated);
     saveCache({ publications: updated });
+    syncToFirestore({ publications: updated });
 
     try {
       await fetch(`/api/admin/publications/${id}`, {
@@ -440,6 +518,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = publications.filter((p) => p.id !== id);
     setPublications(updated);
     saveCache({ publications: updated });
+    syncToFirestore({ publications: updated });
 
     try {
       await fetch(`/api/admin/publications/${id}`, {
@@ -469,6 +548,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = [newRegion, ...studyRegions];
     setStudyRegions(updated);
     saveCache({ studyRegions: updated });
+    syncToFirestore({ studyRegions: updated });
 
     try {
       await fetch('/api/admin/study-regions', {
@@ -486,6 +566,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = studyRegions.map((r) => (r.id === id ? { ...r, ...region } : r));
     setStudyRegions(updated);
     saveCache({ studyRegions: updated });
+    syncToFirestore({ studyRegions: updated });
 
     try {
       await fetch(`/api/admin/study-regions/${id}`, {
@@ -503,6 +584,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = studyRegions.filter((r) => r.id !== id);
     setStudyRegions(updated);
     saveCache({ studyRegions: updated });
+    syncToFirestore({ studyRegions: updated });
 
     try {
       await fetch(`/api/admin/study-regions/${id}`, {
@@ -528,6 +610,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = [newPhoto, ...photoGallery];
     setPhotoGallery(updated);
     saveCache({ photoGallery: updated });
+    syncToFirestore({ photoGallery: updated });
 
     try {
       await fetch('/api/admin/photo-gallery', {
@@ -545,6 +628,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = photoGallery.map((p) => (p.id === id ? { ...p, ...item } : p));
     setPhotoGallery(updated);
     saveCache({ photoGallery: updated });
+    syncToFirestore({ photoGallery: updated });
 
     try {
       await fetch(`/api/admin/photo-gallery/${id}`, {
@@ -562,6 +646,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     const updated = photoGallery.filter((p) => p.id !== id);
     setPhotoGallery(updated);
     saveCache({ photoGallery: updated });
+    syncToFirestore({ photoGallery: updated });
 
     try {
       await fetch(`/api/admin/photo-gallery/${id}`, {
@@ -575,6 +660,13 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const fetchInquiries = async () => {
+    try {
+      const remoteInqs = await getRemoteInquiries();
+      if (remoteInqs && remoteInqs.length > 0) {
+        return remoteInqs;
+      }
+    } catch {}
+
     try {
       const res = await fetch('/api/admin/inquiries', {
         headers: getAuthHeaders(),
@@ -591,6 +683,10 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const deleteInquiry = async (id: string) => {
+    try {
+      await deleteRemoteInquiry(id);
+    } catch {}
+
     try {
       const res = await fetch(`/api/admin/inquiries/${id}`, {
         method: 'DELETE',
@@ -611,6 +707,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     if (backupData.socialLinks) setSocialLinks(backupData.socialLinks);
     if (Array.isArray(backupData.photoGallery)) setPhotoGallery(backupData.photoGallery);
     saveCache(backupData);
+    syncToFirestore(backupData);
 
     try {
       await fetch('/api/admin/import', {
@@ -636,6 +733,9 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
         isLoading,
         isAdmin,
         adminToken,
+        language,
+        setLanguage,
+        t,
         login,
         logout,
         forgotPassword,
