@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Sliders, Cpu, CheckCircle2, AlertTriangle, RefreshCw, BarChart2, HelpCircle } from 'lucide-react';
 
-const GIS_MODELING_IMG = '/src/assets/images/gis_multicriteria_soil_modeling_1794209253751.jpg';
+const GIS_MODELING_IMG = '/assets/images/gis_multicriteria_soil_modeling_1794209253751.jpg';
 
 type ModelScenario = 'rwh_arsi' | 'moringa_weyib' | 'soil_tef';
 
@@ -484,6 +484,16 @@ export const InteractiveDecisionSimulator: React.FC = () => {
                 <img
                   src={GIS_MODELING_IMG}
                   alt="Scientific GIS Land Suitability & Soil Fertility Mapping Interface"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.dataset.fallbackCount) {
+                      target.dataset.fallbackCount = '1';
+                      target.src = '/public/assets/images/gis_multicriteria_soil_modeling_1794209253751.jpg';
+                    } else if (target.dataset.fallbackCount === '1') {
+                      target.dataset.fallbackCount = '2';
+                      target.src = '/src/assets/images/gis_multicriteria_soil_modeling_1794209253751.jpg';
+                    }
+                  }}
                   className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
                   referrerPolicy="no-referrer"
                 />

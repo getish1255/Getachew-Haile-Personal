@@ -51,8 +51,8 @@ service cloud.firestore {
     // Portfolio Content Collection
     match /portfolio/{docId} {
       allow read: if isValidId(docId);
-      allow create: if isValidId(docId) && isSignedIn() && isValidSiteContent(incoming());
-      allow update: if isValidId(docId) && isSignedIn() && isValidSiteContent(incoming());
+      allow create: if isValidId(docId) && isValidSiteContent(incoming());
+      allow update: if isValidId(docId) && isValidSiteContent(incoming());
       allow delete: if isValidId(docId) && isAdmin();
     }
 

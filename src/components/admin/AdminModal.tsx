@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useContent, SocialLinks, PhotoGalleryItem } from '../../context/ContentContext';
 import { Publication, StudyRegion } from '../../data/cvData';
+import { PhotoUploadField } from './PhotoUploadField';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -696,14 +697,51 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Profile Photo Path or URL</label>
-                    <input
-                      type="text"
-                      value={profileForm.photoUrl}
-                      onChange={(e) => setProfileForm({ ...profileForm, photoUrl: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white"
+                  <PhotoUploadField
+                    label="Official Profile Photo (Upload from device, drag & drop, or pick from library)"
+                    value={profileForm.photoUrl}
+                    onChange={(url) => setProfileForm({ ...profileForm, photoUrl: url })}
+                  />
+
+                  {/* Agricultural Field Trial Photo Configuration */}
+                  <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold font-mono text-emerald-400 uppercase tracking-wider">
+                        About Section · Agricultural Field Trials Photograph
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">Tef Crops & Precision Monitoring</span>
+                    </div>
+
+                    <PhotoUploadField
+                      label="Field Trial Photograph (Oromia Tef Research)"
+                      value={profileForm.fieldTrialPhotoUrl || '/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg'}
+                      onChange={(url) => setProfileForm({ ...profileForm, fieldTrialPhotoUrl: url })}
                     />
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                          Photo Overlay Header
+                        </label>
+                        <input
+                          type="text"
+                          value={profileForm.fieldTrialPhotoTitle ?? 'IQQO Agronomy & Natural Resource Trials'}
+                          onChange={(e) => setProfileForm({ ...profileForm, fieldTrialPhotoTitle: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                          Photo Overlay Sub-Caption
+                        </label>
+                        <input
+                          type="text"
+                          value={profileForm.fieldTrialPhotoCaption ?? 'Tef fertilization & soil moisture monitoring'}
+                          onChange={(e) => setProfileForm({ ...profileForm, fieldTrialPhotoCaption: e.target.value })}
+                          className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white"
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <div>
@@ -828,7 +866,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
                           title: '',
                           caption: '',
                           category: 'Field Agronomy',
-                          imageUrl: '/src/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg',
+                          imageUrl: '/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg',
                           date: new Date().getFullYear().toString(),
                         });
                         setIsNewPhoto(true);
@@ -1216,30 +1254,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Image URL / Path *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingPhoto.imageUrl || ''}
-                    onChange={(e) => setEditingPhoto({ ...editingPhoto, imageUrl: e.target.value })}
-                    placeholder="/src/assets/images/... or https://..."
-                    className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white"
-                  />
-                </div>
-
-                {editingPhoto.imageUrl && (
-                  <div className="rounded-lg overflow-hidden h-36 bg-slate-950 border border-slate-800">
-                    <img
-                      src={editingPhoto.imageUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.currentTarget.src = '/public/assets/aistudio/photo_2026-05-26_22-25-44_b863dba6.jpg';
-                      }}
-                    />
-                  </div>
-                )}
+                <PhotoUploadField
+                  label="Photo Image (Upload from device, drag & drop, or pick from research library) *"
+                  value={editingPhoto.imageUrl || ''}
+                  onChange={(url) => setEditingPhoto({ ...editingPhoto, imageUrl: url })}
+                />
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Caption / Description</label>

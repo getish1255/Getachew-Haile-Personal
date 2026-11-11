@@ -12,18 +12,40 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+const portArgIndex = process.argv.indexOf('--port');
+const port = portArgIndex !== -1 && process.argv[portArgIndex + 1]
+  ? parseInt(process.argv[portArgIndex + 1], 10)
+  : (process.env.PORT ? parseInt(process.env.PORT, 10) : 3000);
 
 app.use(express.json({ limit: '10mb' }));
 
 // Persistent Content File
 const DATA_DIR = path.resolve(__dirname, 'data');
 const CONTENT_FILE = path.resolve(DATA_DIR, 'siteContent.json');
+const UPLOADS_DIR = path.resolve(__dirname, 'public', 'uploads');
+const PUBLIC_ASSETS_DIR = path.resolve(__dirname, 'public', 'assets');
+const PUBLIC_IMAGES_DIR = path.resolve(__dirname, 'public', 'assets', 'images');
+const SRC_IMAGES_DIR = path.resolve(__dirname, 'src', 'assets', 'images');
 
-// Ensure data directory exists
+// Ensure data and uploads directories exist
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 }
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Serve all asset and image directories before any route or middleware
+app.use('/assets/images', express.static(PUBLIC_IMAGES_DIR));
+if (fs.existsSync(SRC_IMAGES_DIR)) {
+  app.use('/assets/images', express.static(SRC_IMAGES_DIR));
+  app.use('/src/assets/images', express.static(SRC_IMAGES_DIR));
+}
+app.use('/src/assets/images', express.static(PUBLIC_IMAGES_DIR));
+app.use('/assets', express.static(PUBLIC_ASSETS_DIR));
+app.use('/public/assets', express.static(PUBLIC_ASSETS_DIR));
+app.use('/uploads', express.static(UPLOADS_DIR));
+app.use('/public/uploads', express.static(UPLOADS_DIR));
 
 // Helper to read content
 function readContent() {
@@ -378,7 +400,7 @@ app.post('/api/admin/photo-gallery', verifyAdmin, (req, res) => {
     title: item.title || 'Field Research Image',
     caption: item.caption || '',
     category: item.category || 'Fieldwork',
-    imageUrl: item.imageUrl || '/src/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg',
+    imageUrl: item.imageUrl || '/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg',
     date: item.date || new Date().getFullYear().toString(),
   };
 
@@ -424,6 +446,42 @@ app.delete('/api/admin/photo-gallery/:id', verifyAdmin, (req, res) => {
   }
 
   res.json({ success: true });
+});
+
+// 18. Admin Upload & Store Photo
+app.post('/api/admin/upload-photo', verifyAdmin, (req, res) => {
+  try {
+    const { imageBase64, filename } = req.body;
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'No image data provided' });
+    }
+
+    const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    let buffer: Buffer;
+    let extension = 'jpg';
+
+    if (matches && matches.length === 3) {
+      const mime = matches[1];
+      if (mime.includes('png')) extension = 'png';
+      else if (mime.includes('webp')) extension = 'webp';
+      else if (mime.includes('gif')) extension = 'gif';
+      else if (mime.includes('svg')) extension = 'svg';
+      buffer = Buffer.from(matches[2], 'base64');
+    } else {
+      buffer = Buffer.from(imageBase64, 'base64');
+    }
+
+    const cleanBaseName = filename ? filename.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 30) : 'photo';
+    const safeName = `${cleanBaseName}_${Date.now()}.${extension}`;
+    const filePath = path.join(UPLOADS_DIR, safeName);
+    fs.writeFileSync(filePath, buffer);
+
+    const publicUrl = `/public/uploads/${safeName}`;
+    return res.json({ success: true, url: publicUrl, filename: safeName });
+  } catch (error: any) {
+    console.error('Error saving uploaded photo:', error);
+    return res.status(500).json({ error: 'Failed to save photo file', details: error?.message });
+  }
 });
 
 // Initialize Google GenAI with recommended telemetry header

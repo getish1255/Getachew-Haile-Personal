@@ -17,7 +17,7 @@ import { StudyRegion } from '../data/cvData';
 import { useContent } from '../context/ContentContext';
 
 // Topography image generated via generate_image
-const TOPOGRAPHY_IMG = '/src/assets/images/ethiopia_geospatial_topography_1794209253351.jpg';
+const TOPOGRAPHY_IMG = '/assets/images/ethiopia_geospatial_topography_1794209253351.jpg';
 
 interface InteractiveSpatialExplorerProps {
   onSelectPublication?: (id: number) => void;
@@ -175,6 +175,16 @@ export const InteractiveSpatialExplorer: React.FC<InteractiveSpatialExplorerProp
                 <img
                   src={TOPOGRAPHY_IMG}
                   alt="Ethiopian Highlands & Rift Valley Terrain Geospatial Elevation & NDVI Visualization"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.dataset.fallbackCount) {
+                      target.dataset.fallbackCount = '1';
+                      target.src = '/public/assets/images/ethiopia_geospatial_topography_1794209253351.jpg';
+                    } else if (target.dataset.fallbackCount === '1') {
+                      target.dataset.fallbackCount = '2';
+                      target.src = '/src/assets/images/ethiopia_geospatial_topography_1794209253351.jpg';
+                    }
+                  }}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
                   referrerPolicy="no-referrer"
                 />

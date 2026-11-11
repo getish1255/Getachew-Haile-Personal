@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, Mail, MapPin, Sparkles, Compass, Share2, Camera, Edit2, Check, X } from 'lucide-react';
 import { useContent } from '../context/ContentContext';
 import { InlineEdit } from './admin/InlineEdit';
+import { PhotoUploadField } from './admin/PhotoUploadField';
 
 interface HeroProps {
   onOpenAIModal?: () => void;
@@ -362,32 +363,11 @@ export const Hero: React.FC<HeroProps> = ({ onOpenAIModal }) => {
               </button>
             </div>
             <form onSubmit={handleSavePhotoUrl} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Photo Path or Public Image URL
-                </label>
-                <input
-                  type="text"
-                  value={photoUrlInput}
-                  onChange={(e) => setPhotoUrlInput(e.target.value)}
-                  placeholder="/assets/aistudio/... or https://..."
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white"
-                  required
-                />
-              </div>
-
-              {photoUrlInput && (
-                <div className="h-40 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
-                  <img
-                    src={photoUrlInput}
-                    alt="Preview"
-                    className="h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = '/public/assets/aistudio/photo_2026-05-26_22-25-44_b863dba6.jpg';
-                    }}
-                  />
-                </div>
-              )}
+              <PhotoUploadField
+                label="Profile Photo (Upload from device, drag & drop, or pick from research library)"
+                value={photoUrlInput}
+                onChange={(url) => setPhotoUrlInput(url)}
+              />
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button

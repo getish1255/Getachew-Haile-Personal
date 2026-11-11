@@ -29,6 +29,9 @@ export interface ProfileData {
   summary: string;
   headline?: string;
   aboutNarrative?: string;
+  fieldTrialPhotoUrl?: string;
+  fieldTrialPhotoTitle?: string;
+  fieldTrialPhotoCaption?: string;
   languages: { language: string; proficiency: string }[];
 }
 
@@ -66,15 +69,39 @@ const DEFAULT_PHOTO_GALLERY: PhotoGalleryItem[] = [
     title: 'Tef Organic Fertilizer Demonstration Plots',
     caption: 'Experimental tef plots evaluating ECONAT organic liquid fertilizer in Bora District, East Shewa Zone, Oromia.',
     category: 'Field Agronomy',
-    imageUrl: '/src/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg',
+    imageUrl: '/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg',
     date: 'October 2022',
+  },
+  {
+    id: 'gal_soil_1',
+    title: 'Highlands Agro-Ecological Field Survey & Soil Profiling',
+    caption: 'On-site agro-ecological observation and precision soil core sampling across Oromia highland research stations.',
+    category: 'Field Agronomy',
+    imageUrl: '/assets/images/photo_2026-05-03_13-01-57.jpg',
+    date: 'March 2024',
+  },
+  {
+    id: 'gal_comm_1',
+    title: 'Participatory Research & Community Agronomy Consultation',
+    caption: 'Field engagement, researcher-farmer dialogue, and participatory agronomy evaluation in Central Ethiopia.',
+    category: 'Field Agronomy',
+    imageUrl: '/assets/images/photo_2026-05-05_11-30-28.jpg',
+    date: 'April 2024',
+  },
+  {
+    id: 'gal_ict_1',
+    title: 'Enterprise Digital Infrastructure & Research Systems Review',
+    caption: 'Directing the digital transformation, institutional data architecture, and ICT network interconnectivity at IQQO.',
+    category: 'Leadership',
+    imageUrl: '/assets/images/photo_2026-05-09_18-01-31.jpg',
+    date: 'May 2024',
   },
   {
     id: 'gal_2',
     title: 'GIS Multi-Criteria Land Suitability Console',
     caption: 'Raster modeling, AHP decision weights, and digital soil fertility mapping at IQQO Natural Resources Directorate.',
     category: 'Geospatial Lab',
-    imageUrl: '/src/assets/images/gis_multicriteria_soil_modeling_1794209253751.jpg',
+    imageUrl: '/assets/images/gis_multicriteria_soil_modeling_1794209253751.jpg',
     date: 'June 2023',
   },
   {
@@ -82,7 +109,7 @@ const DEFAULT_PHOTO_GALLERY: PhotoGalleryItem[] = [
     title: 'Satellite Topography & Watershed Delineation',
     caption: 'False-color NDVI and SRTM elevation contours across the Ethiopian Rift Valley & Arsi Zone catchments.',
     category: 'Remote Sensing',
-    imageUrl: '/src/assets/images/ethiopia_geospatial_topography_1794209253351.jpg',
+    imageUrl: '/assets/images/ethiopia_geospatial_topography_1794209253351.jpg',
     date: 'September 2023',
   },
   {
@@ -198,6 +225,9 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   const applyRemoteData = (data: any) => {
     if (!data) return;
+    if (data.lastUpdated && lastUpdated && new Date(data.lastUpdated).getTime() < new Date(lastUpdated).getTime()) {
+      return;
+    }
     if (data.profile) setProfile(data.profile);
     if (Array.isArray(data.publications) && data.publications.length > 0) setPublications(data.publications);
     if (Array.isArray(data.studyRegions) && data.studyRegions.length > 0) setStudyRegions(data.studyRegions);
@@ -603,7 +633,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
       title: item.title || 'Field Research Image',
       caption: item.caption || '',
       category: item.category || 'Field Agronomy',
-      imageUrl: item.imageUrl || '/src/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg',
+      imageUrl: item.imageUrl || '/assets/images/ethiopian_agriculture_field_trial_1794209254817.jpg',
       date: item.date || new Date().getFullYear().toString(),
     };
 
@@ -613,11 +643,23 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     syncToFirestore({ photoGallery: updated });
 
     try {
-      await fetch('/api/admin/photo-gallery', {
+      const res = await fetch('/api/admin/photo-gallery', {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify(item),
+        body: JSON.stringify(newPhoto),
       });
+      if (res.ok) {
+        const resData = await safeParseJson(res);
+        if (resData?.photo) {
+          const finalPhoto = resData.photo;
+          setPhotoGallery((prev) => {
+            const synced = [finalPhoto, ...prev.filter((p) => p.id !== newPhoto.id && p.id !== finalPhoto.id)];
+            saveCache({ photoGallery: synced });
+            syncToFirestore({ photoGallery: synced });
+            return synced;
+          });
+        }
+      }
     } catch (err) {
       console.warn('Backend sync failed, saved locally:', err);
     }
@@ -631,11 +673,23 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
     syncToFirestore({ photoGallery: updated });
 
     try {
-      await fetch(`/api/admin/photo-gallery/${id}`, {
+      const res = await fetch(`/api/admin/photo-gallery/${id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
         body: JSON.stringify(item),
       });
+      if (res.ok) {
+        const resData = await safeParseJson(res);
+        if (resData?.photo) {
+          const finalPhoto = resData.photo;
+          setPhotoGallery((prev) => {
+            const synced = prev.map((p) => (p.id === id ? { ...p, ...finalPhoto } : p));
+            saveCache({ photoGallery: synced });
+            syncToFirestore({ photoGallery: synced });
+            return synced;
+          });
+        }
+      }
     } catch (err) {
       console.warn('Backend sync failed, saved locally:', err);
     }
